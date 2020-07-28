@@ -11,7 +11,7 @@ var A = .1*ring_radius;
 var B_touch = .2;
 var B = B_touch*ring_radius;
 var D = .1*ring_radius;
-var rate = .01;
+var rate = .005;
 var phaserate = 1/10;
 var touch_phase = 0;
 
