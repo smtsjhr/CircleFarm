@@ -1,50 +1,37 @@
+
+let W;
+let H;
 const enable_interaction = true;
-var get_mouse_pos = false;
-var get_touch_pos = false;
-
-var ring_radius = 50;
-var s = 5;
-var h = 2*ring_radius;
-var N;
-var M; 
-var A = .1*ring_radius;
-var B_touch = .2;
-var B = B_touch*ring_radius;
-var D = .1*ring_radius;
-var rate = .005;
-var phaserate = 1/10;
-var touch_phase = 0;
-
+let get_mouse_pos = false;
+let get_touch_pos = false;
+let ring_radius = 50;
+let s = 5;
+let h = 2*ring_radius;
+let N;
+let M; 
+let A = .1*ring_radius;
+let B_touch = .2;
+let B = B_touch*ring_radius;
+let D = .1*ring_radius;
+let rate = .005;
+let phaserate = 1/10;
+let touch_phase = 0;
+let t = 0;
 const fps = 30;
-var t = 0;
-
-var fpsInterval, startTime, now, then, elapsed;
-
-
-var canvas = document.getElementById('canvas');
-var ctx = canvas.getContext('2d');
-
-
-startAnimating(fps);
-
+let dt, startTime, now, then, delta;
+let canvas = document.getElementById('canvas');
+let ctx = canvas.getContext('2d');
 
 function draw() {
-    
-    W = canvas.width = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-    
     ctx.fillStyle = 'rgba(0,0,0,1)';
     ctx.fillRect(0, 0, W, H);
-
     N = H/s;
     M = W/h;
     B = B_touch*ring_radius;
-
     for (let j = -1; j < M+5; j++) {
         for(let i = -10; i < N+20; i++){
             c = Math.abs(150*(i%2));
             u = (j/(M)+ i-(t%2)*(-1)**(j%2))*s;
-
             v = Asine(u, B + D*(.5 + .5*Math.sin(2*Math.PI*(t*phaserate + touch_phase))));
             x_pos = u;
             y_pos = A - ring_radius + j*h + v;
@@ -57,9 +44,7 @@ function draw() {
             ctx.fill();
         }
     }
-    
     t += rate;
-      
 }
 
 function Asine(x, r) {
@@ -69,78 +54,61 @@ function Asine(x, r) {
     return y;
 }
 
-
-function startAnimating(fps) {
-    
-    fpsInterval = 1000/fps;
+function animate(fps) {
+    dt = 1000/fps;
     then = window.performance.now();
     startTime = then;
-    
-    animate();
+    throttle();
  }
  
- function animate(newtime) {
-    
-    
-     requestAnimationFrame(animate);
- 
+ function throttle(newtime) {
+     requestAnimationFrame(throttle);
      now = newtime;
-     elapsed = now - then;
- 
-     if (elapsed > fpsInterval) {
-        then = now - (elapsed % fpsInterval);
-     
+     delta = now - then;
+     if (delta > dt) {
+        then = now - (delta % dt);
         draw();     
-        
      }
-
-     if(enable_interaction) {
-        canvas.addEventListener('mousedown', e => {
-            get_mouse_pos = true;
-            getMousePosition(canvas, e)
-        });
-          
-        canvas.addEventListener('mouseup', e => {
-            get_mouse_pos = false;
-        });
-      
-        canvas.addEventListener('mousemove', function(e) {
-            if(get_mouse_pos) {
-                getMousePosition(canvas, e)
-          }
-        })
-        
-        canvas.addEventListener('touchstart', function(e) {
-            getTouchPosition(canvas,e);
-            event.preventDefault();
-        }, false);
-          
-        canvas.addEventListener('touchend', function(e) {
-     
-        }, false);
-          
-        canvas.addEventListener('touchmove', function(e) {
-            getTouchPosition(canvas,e);
-            event.preventDefault();
-        }, false);
-    }
-   
  }
 
-function getMousePosition(canvas, event) {
-    interaction(canvas,event)
+if(enable_interaction) {
+    canvas.addEventListener('mousedown', e => {
+        get_mouse_pos = true;
+        interaction(e);
+    });
+    canvas.addEventListener('mouseup', e => {
+        get_mouse_pos = false;
+    });
+    canvas.addEventListener('mousemove', function(e) {
+        if(get_mouse_pos) {
+            interaction(e);
+        }
+    })
+    canvas.addEventListener('touchstart', function(e) {
+        let event = e.touches[0];
+        interaction(event)
+    }, false);
+    canvas.addEventListener('touchend', function(e) { }, false);
+    canvas.addEventListener('touchmove', function(e) {
+        let event = e.touches[0];
+        interaction(event)
+    }, false);
 }
 
-function getTouchPosition(canvas, event) {
-    var event = event.touches[0];
-    interaction(canvas,event)
+function interaction(event) {
+    touch_phase = event.clientX/canvas.width;;
+    B_touch = .1 + .1*event.clientY/canvas.height;
 }
 
-function interaction(canvas, event) {
-
-    mouse_x = event.clientX/canvas.width;
-    mouse_y = event.clientY/canvas.height;
-
-    touch_phase = mouse_x;
-    B_touch = .1 + .1*mouse_y;
+function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
 }
+
+window.onresize = function () {
+    resize();
+}
+
+resize();
+
+animate(fps);
